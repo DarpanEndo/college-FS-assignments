@@ -1,0 +1,18 @@
+.app {
+  max-width: 800px;
+  margin: 0 auto;
+  font-family: Arial, sans-serif;
+}
+
+.task-item {
+  padding: 15px;
+  margin: 10px 0;
+  border: 1px solid #ccc;
+  border-left: 6px solid green;
+  background-color: #f9f9f9;
+}
+
+.task-item.overdue {
+  border-left-color: red;
+  background-color: #ffe5e5;
+}
