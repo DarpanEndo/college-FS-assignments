@@ -148,7 +148,7 @@ const ButtonGroup = styled.div`
 `;
 
 const TaskList = () => {
-  const { tasks, dispatch } = useTasks();
+  const { tasks, isLoading, error, dispatch } = useTasks();
   const [showForm, setShowForm] = useState(false);
 
   const handleCreateTask = (taskData) => {
@@ -158,6 +158,14 @@ const TaskList = () => {
     });
     setShowForm(false);
   };
+
+  if (isLoading) {
+    return <div>Loading tasks...</div>;
+  }
+
+  if (error) {
+    return <div>Error: {error}</div>;
+  }
 
   return (
     <div>

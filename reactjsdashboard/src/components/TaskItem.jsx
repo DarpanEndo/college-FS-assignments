@@ -1,9 +1,10 @@
 import React, { useState } from "react";
 import styled from "styled-components";
 import { motion } from "framer-motion";
+import { isOverdue, formatDate } from "../utils/dateUtils";
 
 const StyledTaskItem = styled(motion.div)`
-  background: #fff;
+  background: ${(props) => (props.isOverdue ? "#fff0f0" : "#fff")};
   padding: 20px;
   border-radius: 15px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
@@ -53,6 +54,23 @@ const StyledTaskItem = styled(motion.div)`
       margin-right: 8px;
     }
   }
+
+  ${(props) =>
+    props.isOverdue &&
+    `
+    &::after {
+      content: "OVERDUE";
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      color: #f44336;
+      font-size: 0.8rem;
+      font-weight: bold;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: rgba(244, 67, 54, 0.1);
+    }
+  `}
 `;
 
 const ButtonGroup = styled.div`
@@ -79,7 +97,7 @@ const ActionButton = styled(motion.button)`
 const TaskItem = ({ task, onDelete, onUpdate }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const isOverdue = new Date(task.deadline) < new Date();
+  const taskIsOverdue = isOverdue(task.deadline);
 
   if (isEditing) {
     return (
@@ -95,6 +113,7 @@ const TaskItem = ({ task, onDelete, onUpdate }) => {
 
   return (
     <StyledTaskItem
+      isOverdue={taskIsOverdue}
       priority={task.priority}
       onClick={() => setIsExpanded(!isExpanded)}
       initial={{ scale: 0.9, opacity: 0 }}
@@ -103,13 +122,15 @@ const TaskItem = ({ task, onDelete, onUpdate }) => {
       whileTap={{ scale: 0.95 }}
       transition={{ duration: 0.2 }}
       style={{
-        backgroundColor: isOverdue ? "#fff0f0" : "#ffffff",
+        backgroundColor: taskIsOverdue ? "#fff0f0" : "#ffffff",
         transform: isExpanded ? "scale(1.05)" : "scale(1)",
       }}
     >
       <motion.h3>{task.title}</motion.h3>
       <motion.p>{task.description}</motion.p>
-      <motion.p>Deadline: {new Date(task.deadline).toLocaleString()}</motion.p>
+      <motion.p style={{ color: taskIsOverdue ? "#f44336" : "#666" }}>
+        Due: {formatDate(task.deadline)}
+      </motion.p>
       <motion.p>Priority: {task.priority}</motion.p>
       <motion.p>Status: {task.status}</motion.p>
       <motion.p>Category: {task.category}</motion.p>

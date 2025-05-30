@@ -1,13 +1,18 @@
 import { createContext, useContext, useReducer, useEffect } from "react";
-import tasksData from "../mock/tasks.json";
+import { taskApi } from "../services/taskApi";
 
 const TaskContext = createContext();
 
-const priorityWeight = { high: 3, medium: 2, low: 1 };
+const priorityWeight = {
+  high: 3,
+  medium: 2,
+  low: 1,
+};
 
 const getUrgencyScore = (deadline, priority) => {
-  const days = (new Date(deadline) - new Date()) / (1000 * 60 * 60 * 24);
-  return days / priorityWeight[priority];
+  const daysToDeadline =
+    (new Date(deadline) - new Date()) / (1000 * 60 * 60 * 24);
+  return daysToDeadline / priorityWeight[priority];
 };
 
 const initialState = {
@@ -15,6 +20,8 @@ const initialState = {
   filteredPriority: "all",
   filteredStatus: "all",
   filteredCategory: "all",
+  isLoading: false,
+  error: null,
 };
 
 function reducer(state, action) {
@@ -41,6 +48,10 @@ function reducer(state, action) {
       return { ...state, filteredStatus: action.payload };
     case "SET_CATEGORY_FILTER":
       return { ...state, filteredCategory: action.payload };
+    case "SET_LOADING":
+      return { ...state, isLoading: action.payload };
+    case "SET_ERROR":
+      return { ...state, error: action.payload };
     default:
       return state;
   }
@@ -50,17 +61,31 @@ export const TaskProvider = ({ children }) => {
   const [state, dispatch] = useReducer(reducer, initialState);
 
   useEffect(() => {
-    dispatch({ type: "SET_TASKS", payload: tasksData });
+    const loadTasks = async () => {
+      dispatch({ type: "SET_LOADING", payload: true });
+      try {
+        const tasks = await taskApi.fetchTasks();
+        dispatch({ type: "SET_TASKS", payload: tasks });
+      } catch (error) {
+        dispatch({ type: "SET_ERROR", payload: error.message });
+      } finally {
+        dispatch({ type: "SET_LOADING", payload: false });
+      }
+    };
+
+    loadTasks();
   }, []);
 
-  const filteredTasks = state.tasks
+  // Filter and sort tasks
+  const sortedAndFilteredTasks = state.tasks
     .filter(
-      (t) =>
+      (task) =>
         (state.filteredPriority === "all" ||
-          t.priority === state.filteredPriority) &&
-        (state.filteredStatus === "all" || t.status === state.filteredStatus) &&
+          task.priority === state.filteredPriority) &&
+        (state.filteredStatus === "all" ||
+          task.status === state.filteredStatus) &&
         (state.filteredCategory === "all" ||
-          t.category === state.filteredCategory)
+          task.category === state.filteredCategory)
     )
     .sort(
       (a, b) =>
@@ -69,7 +94,14 @@ export const TaskProvider = ({ children }) => {
     );
 
   return (
-    <TaskContext.Provider value={{ tasks: filteredTasks, dispatch }}>
+    <TaskContext.Provider
+      value={{
+        tasks: sortedAndFilteredTasks,
+        isLoading: state.isLoading,
+        error: state.error,
+        dispatch,
+      }}
+    >
       {children}
     </TaskContext.Provider>
   );
