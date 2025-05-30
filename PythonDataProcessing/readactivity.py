@@ -5,7 +5,7 @@ from collections import defaultdict, Counter, deque
 
 data = []
 
-with open('activity.csv', newline='') as f:
+with open('./activity.csv', newline='') as f:
     reader = csv.DictReader(f)
     for row in reader:
         timestamp = datetime.fromisoformat(row['timestamp'])
